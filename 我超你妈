@@ -1,0 +1,153 @@
+loadstring([==[
+local player = game:GetService("Players").LocalPlayer
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+-- 配置
+local epoh1 = CFrame.new(998.4656372070312, 15, 395.9789733886719)
+local forbiddenZoneCenter = Vector3.new(352.884155, 13.0287256, -1353.05396)
+local forbiddenRadius = 80
+local scriptStartTime = os.time()
+local targetItems = {"Money Printer", "Blue Candy Cane", "Bunny Balloon", "Ghost Balloon", "Clover Balloon", "Bat Balloon", "Gold Clover Balloon", "Golden Rose", "Black Rose", "Heart Balloon", "Diamond Ring", "Diamond", "Void Gem", "Dark Matter Gem", "Rollie"}
+
+-- 初始化角色
+local character = player.Character or player.CharacterAdded:Wait()
+local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+-- 通知函数
+local function ShowNotification(text)
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "自动脚本",
+        Text = text,
+        Duration = 5
+    })
+end
+
+-- 检查超时
+local function checkTimeout()
+    return (os.time() - scriptStartTime) >= 120
+end
+
+-- 服务器切换
+local function TPServer()
+    ShowNotification("正在切换到新服务器...")
+    local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100"))
+    local availableServers = {}
+    
+    for _, server in ipairs(servers.data) do
+        if server.playing < server.maxPlayers and server.id ~= game.JobId then
+            table.insert(availableServers, server.id)
+        end
+    end
+    
+    if #availableServers > 0 then
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, availableServers[math.random(1, #availableServers)])
+    else
+        task.wait(5)
+        TPServer()
+    end
+end
+
+-- 自动移动
+local function autoMove()
+    while task.wait(3) do
+        if character and HumanoidRootPart and humanoid.Health > 0 then
+            humanoid:Move(HumanoidRootPart.CFrame.LookVector)
+        end
+    end
+end
+
+-- 物品拾取
+local function PickItem(item, prompt)
+    prompt.RequiresLineOfSight = false
+    prompt.HoldDuration = 0
+    
+    local connection = game:GetService("RunService").Heartbeat:Connect(function()
+        if checkTimeout() then
+            connection:Disconnect()
+            TPServer()
+            return
+        end
+        
+        if not item or not item.Parent then
+            connection:Disconnect()
+            return
+        end
+        
+        HumanoidRootPart.CFrame = item.CFrame * CFrame.new(0, 2, 0)
+        fireproximityprompt(prompt)
+    end)
+    
+    task.wait(30)
+    if connection then connection:Disconnect() end
+end
+
+-- 自动物品拾取
+local function AutoPickItem()
+    for _, itemFolder in pairs(game:GetService("Workspace").Game.Entities.ItemPickup:GetChildren()) do
+        for _, item in pairs(itemFolder:GetChildren()) do
+            if (item:IsA("MeshPart") or item:IsA("Part")) and (item.Position - forbiddenZoneCenter).Magnitude > forbiddenRadius then
+                for _, child in pairs(item:GetChildren()) do
+                    if child:IsA("ProximityPrompt") and table.find(targetItems, child.ObjectText) then
+                        PickItem(item, child)
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- 银行抢劫
+local function AutoFarmBank()
+    local BankDoor = workspace.BankRobbery.VaultDoor
+    local BankCashs = workspace.BankRobbery.BankCash
+    
+    while task.wait(0.1) do
+        if checkTimeout() then
+            TPServer()
+            return
+        end
+        
+        if BankDoor.Door.Attachment.ProximityPrompt.Enabled and BankCashs.Cash:FindFirstChild("Bundle") then
+            HumanoidRootPart.CFrame = CFrame.new(1078.08093, 6.24685, -343.95758)
+            fireproximityprompt(BankDoor.Door.Attachment.ProximityPrompt)
+        elseif not BankDoor.Door.Attachment.ProximityPrompt.Enabled and BankCashs.Cash:FindFirstChild("Bundle") then
+            local targetPos = BankCashs.Cash:FindFirstChild("Bundle"):GetPivot().Position
+            HumanoidRootPart.CFrame = CFrame.new(targetPos.X, targetPos.Y - 5, targetPos.Z)
+            fireproximityprompt(BankCashs.Main.Attachment.ProximityPrompt)
+        else
+            TPServer()
+            return
+        end
+    end
+end
+
+-- 主函数
+local function Main()
+    coroutine.wrap(autoMove)()
+    
+    while true do
+        character = player.Character or player.CharacterAdded:Wait()
+        HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        humanoid = character:WaitForChild("Humanoid")
+        scriptStartTime = os.time()
+        HumanoidRootPart.CFrame = epoh1
+        
+        if not AutoPickItem() then
+            AutoFarmBank()
+        end
+        
+        task.wait(1)
+        if checkTimeout() then TPServer() end
+    end
+end
+
+-- 安全启动
+local success, err = pcall(Main)
+if not success then
+    ShowNotification("脚本错误: " .. tostring(err))
+end
+]==])()

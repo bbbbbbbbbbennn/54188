@@ -7,7 +7,8 @@ repeat task.wait() until LocalPlayer and LocalPlayer.Name ~= nil
 -- 增强版白名单列表(确保都是小写无空格)
 local whitelist = {
     "fifkchxuc",    -- 确保这些是准确的Roblox用户名
-    "greenbag119",   -- 注意大小写
+    "greenbag119",
+    "46469gmmgwg",
     -- 最多可添加50个用户名
 }
 

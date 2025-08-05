@@ -46,7 +46,7 @@ if not isPlayerWhitelisted(LocalPlayer.Name) then
         Duration = 5
     })
     wait(1)
-    LocalPlayer:Kick("快去找BEN买白名单")
+    LocalPlayer:Kick("快去找BEN买白名单 qq联系2321221466购买")
     return
 else
     game.StarterGui:SetCore("SendNotification", {

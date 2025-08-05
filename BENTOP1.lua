@@ -1,61 +1,133 @@
 loadstring([==[local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- 白名单列表
+-- 等待玩家数据完全加载
+repeat task.wait() until LocalPlayer and LocalPlayer.Name ~= nil
+
+-- 增强版白名单列表(确保都是小写无空格)
 local whitelist = {
-    "YourUsernameHere",  -- 替换为你的用户名
-    "fifkchxuc",
-    "greenbag119"     -- 最多支持50个用户名
+    "fifkchxuc",    -- 确保这些是准确的Roblox用户名
+    "greenbag119",   -- 注意大小写
+    -- 最多可添加50个用户名
 }
 
--- 检查白名单是否为空或无效
+-- 调试打印白名单
+print("当前白名单列表:")
+for i, name in ipairs(whitelist) do
+    print(i..": "..name)
+end
+
+-- 增强的白名单有效性检查
 local function isWhitelistValid()
-    -- 检查是否有至少一个非空的有效用户名
-    for _, name in ipairs(whitelist) do
-        if type(name) == "string" and name ~= "" and name ~= "YourUsernameHere" then
-            return true
-        end
+    -- 检查白名单是否为空
+    if #whitelist == 0 then
+        warn("白名单为空!")
+        return false
     end
-    return false
-end
-
--- 检查当前玩家是否在白名单中
-local function isPlayerWhitelisted(playerName)
-    -- 先去除两边空格再比较
-    playerName = playerName:gsub("^%s*(.-)%s*$", "%1")
     
+    -- 检查每个条目是否有效
+    local validCount = 0
+    for _, name in ipairs(whitelist) do
+        -- 确保是字符串且不是空值或占位符
+        if type(name) == "string" and name ~= "" and name ~= "YourUsernameHere" then
+            validCount = validCount + 1
+        else
+            warn("发现无效的白名单条目: "..tostring(name))
+        end
+    end
+    
+    -- 至少需要一个有效条目
+    if validCount == 0 then
+        warn("没有有效的白名单条目!")
+        return false
+    end
+    
+    return true
+end
+
+-- 增强的白名单检查(不区分大小写和空格)
+local function isPlayerWhitelisted(playerName)
+    -- 标准化玩家名(去空格+转小写)
+    local normalizedPlayerName = string.lower(string.gsub(playerName or "", "%s+", ""))
+    
+    -- 检查每个白名单条目
     for _, allowedName in ipairs(whitelist) do
-        -- 也去除白名单名字的空格
-        local trimmedName = allowedName:gsub("^%s*(.-)%s*$", "%1")
-        if playerName == trimmedName then
+        -- 标准化白名单名
+        local normalizedAllowedName = string.lower(string.gsub(allowedName or "", "%s+", ""))
+        
+        -- 调试打印比较
+        print("比较: '"..normalizedPlayerName.."' vs '"..normalizedAllowedName.."'")
+        
+        if normalizedPlayerName == normalizedAllowedName then
             return true
         end
     end
+    
     return false
 end
 
--- 主检查逻辑
-if not isWhitelistValid() then
-    LocalPlayer:Kick("白名单配置无效，请联系管理员")
-    return
+-- 主检查逻辑(添加更多错误处理)
+local function checkWhitelist()
+    -- 检查白名单有效性
+    if not isWhitelistValid() then
+        local msg = "白名单配置无效，请联系管理员"
+        warn(msg)
+        LocalPlayer:Kick(msg)
+        return false
+    end
+    
+    -- 获取当前玩家名(带错误处理)
+    local currentPlayerName
+    pcall(function()
+        currentPlayerName = LocalPlayer.Name
+    end)
+    
+    if not currentPlayerName then
+        local msg = "无法获取玩家名称"
+        warn(msg)
+        LocalPlayer:Kick(msg)
+        return false
+    end
+    
+    print("当前玩家: "..currentPlayerName)
+    
+    -- 检查白名单
+    if not isPlayerWhitelisted(currentPlayerName) then
+        local msg = "您不在白名单中 ("..currentPlayerName..")"
+        warn(msg)
+        
+        -- 显示通知
+        pcall(function()
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "白名单限制",
+                Text = msg,
+                Duration = 5
+            })
+        end)
+        
+        task.wait(1)
+        LocalPlayer:Kick("快去找BEN买白名单 qq联系2321221466购买")
+        return false
+    end
+    
+    -- 白名单验证通过
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "验证通过",
+            Text = "欢迎 "..currentPlayerName.."，可以使用BEN自动脚本",
+            Duration = 5
+        })
+    end)
+    
+    return true
 end
 
-if not isPlayerWhitelisted(LocalPlayer.Name) then
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "白名单限制",
-        Text = "您不在白名单中 ("..LocalPlayer.Name..")",
-        Duration = 5
-    })
-    wait(1)
-    LocalPlayer:Kick("快去找BEN买白名单 qq联系2321221466购买")
-    return
-else
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "验证通过",
-        Text = "欢迎 "..LocalPlayer.Name.."，可以使用BEN自动脚本",
-        Duration = 5
-    })
+-- 执行白名单检查
+if not checkWhitelist() then
+    return -- 终止脚本执行
 end
+
+-- 以下是您原有的脚本内容...
 local player = game:GetService("Players").LocalPlayer
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")

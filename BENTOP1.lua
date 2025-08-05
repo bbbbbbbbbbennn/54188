@@ -1,8 +1,30 @@
+loadstring([==[local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
-loadstring([==[local function isPlayerWhitelisted(playerName)
+-- 白名单列表
+local whitelist = {
+    "YourUsernameHere",  -- 替换为你的用户名
+    "fifkchxuc",     -- 最多支持50个用户名
+}
+
+-- 检查白名单是否为空或无效
+local function isWhitelistValid()
+    -- 检查是否有至少一个非空的有效用户名
+    for _, name in ipairs(whitelist) do
+        if type(name) == "string" and name ~= "" and name ~= "YourUsernameHere" then
+            return true
+        end
+    end
+    return false
+end
+
+-- 检查当前玩家是否在白名单中
+local function isPlayerWhitelisted(playerName)
+    -- 先去除两边空格再比较
     playerName = playerName:gsub("^%s*(.-)%s*$", "%1")
     
     for _, allowedName in ipairs(whitelist) do
+        -- 也去除白名单名字的空格
         local trimmedName = allowedName:gsub("^%s*(.-)%s*$", "%1")
         if playerName == trimmedName then
             return true
@@ -11,6 +33,7 @@ loadstring([==[local function isPlayerWhitelisted(playerName)
     return false
 end
 
+-- 主检查逻辑
 if not isWhitelistValid() then
     LocalPlayer:Kick("白名单配置无效，请联系管理员")
     return
@@ -22,7 +45,7 @@ if not isPlayerWhitelisted(LocalPlayer.Name) then
         Text = "您不在白名单中 ("..LocalPlayer.Name..")",
         Duration = 5
     })
-    wait(3)
+    wait(1)
     LocalPlayer:Kick("快去找BEN买白名单")
     return
 else
@@ -32,116 +55,124 @@ else
         Duration = 5
     })
 end
-local _9a0x1 = game:GetService("\80\108\97\121\101\114\115").LocalPlayer
-local _b3f7y = game:GetService("\84\101\108\101\112\111\114\116\83\101\114\118\105\99\101")
-local _c8e2z = game:GetService("\72\116\116\112\83\101\114\118\105\99\101")
-local _d4g3a = _9a0x1.Character or _9a0x1.CharacterAdded:Wait()
-local _e5h4b = _d4g3a:WaitForChild("\72\117\109\97\110\111\105\100\82\111\111\116\80\97\114\116")
-local _f6i5c = _d4g3a:WaitForChild("\72\117\109\97\110\111\105\100")
-local _g7j6d = os.time()
-local _h8k7e = Vector3.new(352.884155,13.0287256,-1353.05396)
-local _i9l8f = 80
-local _j0m9g = _c8e2z:JSONDecode(game:HttpGet("\104\116\116\112\115\58\47\47\103\97\109\101\115\46\114\111\98\108\111\120\46\99\111\109\47\118\49\47\103\97\109\101\115\47"..game.PlaceId.."\47\115\101\114\118\101\114\115\47\80\117\98\108\105\99\63\108\105\109\105\116\61\49\48\48"))
-local _k1n0h = game.JobId
-local _l2o1i = {}
-local _m3p2j = CFrame.new(998.4656372070312,15,395.9789733886719)
-_e5h4b.CFrame = _m3p2j
-local _n4q3k = {
-    "\77\111\110\101\121\32\80\114\105\110\116\101\114",
-    "\66\108\117\101\32\67\97\110\100\121\32\67\97\110\101",
-    "\66\117\110\110\121\32\66\97\108\108\111\111\110",
-    "\71\104\111\115\116\32\66\97\108\108\111\111\110",
-    "\67\108\111\118\101\114\32\66\97\108\108\111\111\110",
-    "\66\97\116\32\66\97\108\108\111\111\110",
-    "\71\111\108\100\32\67\108\111\118\101\114\32\66\97\108\108\111\111\110",
-    "\71\111\108\100\101\110\32\82\111\115\101",
-    "\66\108\97\99\107\32\82\111\115\101",
-    "\72\101\97\114\116\32\66\97\108\108\111\111\110",
-    "\68\105\97\109\111\110\100\32\82\105\110\103",
-    "\68\105\97\109\111\110\100",
-    "\86\111\105\100\32\71\101\109",
-    "\68\97\114\107\32\77\97\116\116\101\114\32\71\101\109",
-    "\82\111\108\108\105\101"
+local player = game:GetService("Players").LocalPlayer
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local character = player.Character or player.CharacterAdded:Wait()
+local HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+local scriptStartTime = os.time()
+local forbiddenZoneCenter = Vector3.new(352.884155, 13.0287256, -1353.05396)
+local forbiddenRadius = 80
+local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100"))
+local currentJobId = game.JobId
+local availableServers = {}
+
+-- 初始化角色位置
+local epoh1 = CFrame.new(998.4656372070312, 15, 395.9789733886719)
+HumanoidRootPart.CFrame = epoh1
+
+-- 所有需要捡起的物品列表
+local targetItems = {
+    "Money Printer",
+    "Blue Candy Cane",
+    "Bunny Balloon",
+    "Ghost Balloon",
+    "Clover Balloon",
+    "Bat Balloon",
+    "Gold Clover Balloon",
+    "Golden Rose",
+    "Black Rose",
+    "Heart Balloon",
+    "Diamond Ring",
+    "Diamond",
+    "Void Gem",
+    "Dark Matter Gem",
+    "Rollie"
 }
 
-local function _o5r4l(_p6s5m)
-    game.StarterGui:SetCore("\83\101\110\100\78\111\116\105\102\105\99\97\116\105\111\110", {
-        Title = "\232\135\170\229\138\168\232\132\154\230\156\172",
-        Text = _p6s5m,
+local function ShowNotification(text)
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "自动脚本",
+        Text = text,
         Duration = 5
     })
 end
 
-local function _q7t6n()
-    return (os.time() - _g7j6d) >= 120
+local function checkTimeout()
+    return (os.time() - scriptStartTime) >= 120
 end
 
-local function _r8u7o()
-    _j0m9g = _c8e2z:JSONDecode(game:HttpGet("\104\116\116\112\115\58\47\47\103\97\109\101\115\46\114\111\98\108\111\120\46\99\111\109\47\118\49\47\103\97\109\101\115\47"..game.PlaceId.."\47\115\101\114\118\101\114\115\47\80\117\98\108\105\99\63\108\105\109\105\116\61\49\48\48"))
-    _l2o1i = {}
+local function TPServer()
+    -- 重新获取服务器列表
+    servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100"))
+    availableServers= {}
     
-    for _s9v8p, _t0w9q in ipairs(_j0m9g.data) do
-        if _t0w9q.playing < _t0w9q.maxPlayers and _t0w9q.id ~= _k1n0h then
-            table.insert(_l2o1i, _t0w9q.id)
+    for _, server in ipairs(servers.data) do
+        if server.playing < server.maxPlayers and server.id ~= currentJobId then
+            table.insert(availableServers, server.id)
         end
     end
     
-    if #_l2o1i > 0 then
-        _o5r4l("\230\173\163\229\156\168\229\136\135\230\141\162\229\136\176\230\150\176\230\156\141\229\138\161\229\153\168...")
-        _b3f7y:TeleportToPlaceInstance(game.PlaceId, _l2o1i[math.random(1, #_l2o1i)])
+    if #availableServers > 0 then
+        ShowNotification("正在切换到新服务器...")
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, availableServers[math.random(1, #availableServers)])
     else
-        _o5r4l("\230\178\161\230\156\137\229\143\175\231\148\168\230\156\141\229\138\161\229\153\168\239\188\140\231\173\137\229\190\1335\231\167\146\229\144\142\233\135\141\232\175\149")
+        ShowNotification("没有可用服务器，等待5秒后重试")
         task.wait(5)
-        _r8u7o()
+        TPServer()
     end
 end
 
-local function _u1x0r()
+-- 自动移动功能
+local function autoMove()
     while true do
-        if _d4g3a and _e5h4b and _f6i5c.Health > 0 then
-            local _v2y1s = _e5h4b.CFrame.LookVector
-            _f6i5c:Move(_v2y1s)
+        if character and HumanoidRootPart and humanoid.Health > 0 then
+            -- 获取当前朝向向量并向前移动
+            local moveDirection = HumanoidRootPart.CFrame.LookVector
+            humanoid:Move(moveDirection)
         end
-        task.wait(3)
+        task.wait(3) -- 控制移动更新的频率
     end
 end
 
-coroutine.wrap(_u1x0r)()
+-- 启动自动移动
+coroutine.wrap(autoMove)()
 
-local function _w3z2t()
-    _o5r4l("\230\173\163\229\156\168\229\175\188\230\137\190\231\137\169\229\147\129...")
+local function AutoPickItem()
+    ShowNotification("正在寻找物品...")
     
-    local _x4a3u = false
-    for _y5b4v, _z6c5w in pairs(game:GetService("\87\111\114\107\115\112\97\99\101").Game.Entities.ItemPickup:GetChildren()) do
-        for _a7d6x, _b8e7y in pairs(_z6c5w:GetChildren()) do
-            if _b8e7y:IsA("\77\101\115\104\80\97\114\116") or _b8e7y:IsA("\80\97\114\116") then
-                local _c9f8z = _b8e7y.Position
-                local _d0g9a = (_c9f8z - _h8k7e).Magnitude
+    local foundItem = false
+    for _, itemFolder in pairs(game:GetService("Workspace").Game.Entities.ItemPickup:GetChildren()) do
+        for _, item in pairs(itemFolder:GetChildren()) do
+            if item:IsA("MeshPart") or item:IsA("Part") then
+                local itemPos = item.Position
+                local distance = (itemPos - forbiddenZoneCenter).Magnitude
     
-                if _d0g9a > _i9l8f then
-                    for _e1h0b, _f2i1c in pairs(_b8e7y:GetChildren()) do
-                        if _f2i1c:IsA("\80\114\111\120\105\109\105\116\121\80\114\111\109\112\116") then
-                            for _g3j2d, _h4k3e in pairs(_n4q3k) do
-                                if _f2i1c.ObjectText == _h4k3e then
-                                    _x4a3u = true
-                                    _f2i1c.RequiresLineOfSight = false
-                                    _f2i1c.HoldDuration = 0
-                                    _f6i5c:Move(Vector3.new(1, 0, 0))
-                                    _e5h4b.CFrame = _b8e7y.CFrame * CFrame.new(0, 2, 0)
-                                    fireproximityprompt(_f2i1c)
+                if distance > forbiddenRadius then
+                    for _, child in pairs(item:GetChildren()) do
+                        if child:IsA("ProximityPrompt") then
+                            for _, targetName in pairs(targetItems) do
+                                if child.ObjectText == targetName then
+                                    foundItem = true
+                                    child.RequiresLineOfSight = false
+                                    child.HoldDuration = 0
+                                    humanoid:Move(Vector3.new(1, 0, 0))
+                                    HumanoidRootPart.CFrame = item.CFrame * CFrame.new(0, 2, 0)
+                                    fireproximityprompt(child)
                                     
-                                    local _i5l4f = tick()
-                                    local _j6m5g = 5
-                                    local _k7n6h
-                                    _k7n6h = game:GetService("\82\117\110\83\101\114\118\105\99\101").Heartbeat:Connect(function()
-                                        if not _b8e7y or not _b8e7y.Parent then
-                                            _k7n6h:Disconnect()
+                                    local startTime = tick()
+                                    local timeout = 5
+                                    local connection
+                                    connection = game:GetService("RunService").Heartbeat:Connect(function()
+                                        if not item or not item.Parent then
+                                            connection:Disconnect()
                                             return
                                         end
                                         
-                                        if tick() - _i5l4f >= _j6m5g then
-                                            _b8e7y:Destroy()
-                                            _k7n6h:Disconnect()
+                                        if tick() - startTime >= timeout then
+                                            item:Destroy()
+                                            connection:Disconnect()
                                         end
                                     end)
                                 end
@@ -153,55 +184,58 @@ local function _w3z2t()
         end
     end
 
-    return not _x4a3u
+    return not foundItem -- 返回是否应该执行银行抢劫
 end
 
-local function _l8o7i()
-    _o5r4l("\230\173\163\229\156\168\230\140\145\229\138\168\233\147\182\232\161\140...")
+local function AutoFarmBank()
+    ShowNotification("正在抢劫银行...")
 
-    local _m9p8j = workspace.BankRobbery.VaultDoor
-    local _n0q9k = workspace.BankRobbery.BankCash
+    local BankDoor = workspace.BankRobbery.VaultDoor
+    local BankCashs = workspace.BankRobbery.BankCash
 
     while task.wait(0.1) do
-        if _q7t6n() then
-            _r8u7o()
+        if checkTimeout() then
+            TPServer()
             return
         end
 
-        if _m9p8j.Door.Attachment.ProximityPrompt.Enabled == true and _n0q9k.Cash:FindFirstChild("\66\117\110\100\108\101") then
-            _e5h4b.CFrame = CFrame.new(1078.08093,6.24685,-343.95758)
-            _m9p8j.Door.Attachment.ProximityPrompt.HoldDuration = 0
-            fireproximityprompt(_m9p8j.Door.Attachment.ProximityPrompt)
+        if BankDoor.Door.Attachment.ProximityPrompt.Enabled == true and BankCashs.Cash:FindFirstChild("Bundle") then
+            HumanoidRootPart.CFrame = CFrame.new(1078.08093, 6.24685, -343.95758)
+            BankDoor.Door.Attachment.ProximityPrompt.HoldDuration = 0
+            fireproximityprompt(BankDoor.Door.Attachment.ProximityPrompt)
             task.wait(0.5)
-        elseif not _m9p8j.Door.Attachment.ProximityPrompt.Enabled and _n0q9k.Cash:FindFirstChild("\66\117\110\100\108\101") then
-            local _o1r0l = _n0q9k.Cash:FindFirstChild("\66\117\110\100\108\101"):GetPivot().Position
-            local _p2s1m = Vector3.new(_o1r0l.X,_o1r0l.Y-5,_o1r0l.Z)
-            local _q3t2n = (_o1r0l - _p2s1m).Unit
-            _e5h4b.CFrame = CFrame.new(_p2s1m,_p2s1m+_q3t2n)
-            _n0q9k.Main.Attachment.ProximityPrompt.RequiresLineOfSight = false
-            _n0q9k.Main.Attachment.ProximityPrompt.HoldDuration = 0
-            fireproximityprompt(_n0q9k.Main.Attachment.ProximityPrompt)
+        elseif not BankDoor.Door.Attachment.ProximityPrompt.Enabled and BankCashs.Cash:FindFirstChild("Bundle") then
+            local targetPos = BankCashs.Cash:FindFirstChild("Bundle"):GetPivot().Position
+            local basePosition = Vector3.new(targetPos.X, targetPos.Y - 5, targetPos.Z)
+            local lookVector = (targetPos - basePosition).Unit
+            HumanoidRootPart.CFrame = CFrame.new(basePosition, basePosition + lookVector)
+            BankCashs.Main.Attachment.ProximityPrompt.RequiresLineOfSight = false
+            BankCashs.Main.Attachment.ProximityPrompt.HoldDuration = 0
+            fireproximityprompt(BankCashs.Main.Attachment.ProximityPrompt)
             task.wait(0.5)
         else
-            _o5r4l("\230\140\145\229\138\168\233\147\182\232\161\140\229\174\140\230\136\144\239\188\1401\231\167\146\229\144\142\230\141\162\230\156\141")
+            ShowNotification("抢劫银行完成，1秒后换服")
             task.wait(1)
-            _r8u7o()
+            TPServer()
             return
         end
     end
 end
 
+-- 主循环
 while true do
-    _d4g3a = _9a0x1.Character or _9a0x1.CharacterAdded:Wait()
-    _e5h4b = _d4g3a:WaitForChild("\72\117\109\97\110\111\105\100\82\111\111\116\80\97\114\116")
-    _f6i5c = _d4g3a:WaitForChild("\72\117\109\97\110\111\105\100")
-    _g7j6d = os.time()
+    -- 确保角色存在
+    character = player.Character or player.CharacterAdded:Wait()
+    HumanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoid = character:WaitForChild("Humanoid")
+    scriptStartTime = os.time()
     
-    local _r4u3o = _w3z2t()
+    local shouldRobBank = AutoPickItem()
     
-    if _r4u3o then
-        _l8o7i()
+    if shouldRobBank then
+        AutoFarmBank()
     end
     
+    -- 等待一段时间再检查，避免过于频繁
     task.wait(5)
 end]==])()

@@ -1,5 +1,38 @@
-loadstring([==["https://raw.githubusercontent.com/ENSHIDALAO/baimingdan/refs/heads/main/BEN.lua"]==])()
-loadstring([==[local _9a0x1 = game:GetService("\80\108\97\121\101\114\115").LocalPlayer
+
+loadstring([==[local function isPlayerWhitelisted(playerName)
+    playerName = playerName:gsub("^%s*(.-)%s*$", "%1")
+    
+    for _, allowedName in ipairs(whitelist) do
+        local trimmedName = allowedName:gsub("^%s*(.-)%s*$", "%1")
+        if playerName == trimmedName then
+            return true
+        end
+    end
+    return false
+end
+
+if not isWhitelistValid() then
+    LocalPlayer:Kick("白名单配置无效，请联系管理员")
+    return
+end
+
+if not isPlayerWhitelisted(LocalPlayer.Name) then
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "白名单限制",
+        Text = "您不在白名单中 ("..LocalPlayer.Name..")",
+        Duration = 5
+    })
+    wait(3)
+    LocalPlayer:Kick("快去找BEN买白名单")
+    return
+else
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "验证通过",
+        Text = "欢迎 "..LocalPlayer.Name.."，可以使用BEN自动脚本",
+        Duration = 5
+    })
+end
+local _9a0x1 = game:GetService("\80\108\97\121\101\114\115").LocalPlayer
 local _b3f7y = game:GetService("\84\101\108\101\112\111\114\116\83\101\114\118\105\99\101")
 local _c8e2z = game:GetService("\72\116\116\112\83\101\114\118\105\99\101")
 local _d4g3a = _9a0x1.Character or _9a0x1.CharacterAdded:Wait()

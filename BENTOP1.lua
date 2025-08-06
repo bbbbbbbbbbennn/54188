@@ -9,7 +9,7 @@ local whitelist = {
     "fifkchxuc",    -- 确保这些是准确的Roblox用户名
     "greenbag119",
     "46469gmmgwg",
-    "Snow_GJDW","ddguyfdd","Release14572","hdhdgh830",
+    "Snow_GJDW","ddguyfdd","Release14572",
     -- 最多可添加50个用户名
 }
 
@@ -129,7 +129,6 @@ if not checkWhitelist() then
     return -- 终止脚本执行
 end
 
--- 以下是您原有的脚本内容...
 local player = game:GetService("Players").LocalPlayer
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
@@ -147,7 +146,7 @@ local availableServers = {}
 local epoh1 = CFrame.new(998.4656372070312, 15, 395.9789733886719)
 HumanoidRootPart.CFrame = epoh1
 
--- 所有需要捡起的物品列表
+-- 优先捡取的物品列表（印钞机优先）
 local targetItems = {
     "Money Printer",
     "Blue Candy Cane",
@@ -163,7 +162,7 @@ local targetItems = {
     "Diamond",
     "Void Gem",
     "Dark Matter Gem",
-    "Rollie"
+    "Rollie" -- 印钞机优先
 }
 
 local function ShowNotification(text)
@@ -181,7 +180,7 @@ end
 local function TPServer()
     -- 重新获取服务器列表
     servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?limit=100"))
-    availableServers= {}
+    availableServers = {}
     
     for _, server in ipairs(servers.data) do
         if server.playing < server.maxPlayers and server.id ~= currentJobId then
@@ -214,52 +213,84 @@ end
 -- 启动自动移动
 coroutine.wrap(autoMove)()
 
-local function AutoPickItem()
-    ShowNotification("正在寻找物品...")
+-- 改进的物品检测函数，优先寻找印钞机
+local function FindMoneyPrinters()
+    local moneyPrinters = {}
     
-    local foundItem = false
+    -- 遍历所有物品
     for _, itemFolder in pairs(game:GetService("Workspace").Game.Entities.ItemPickup:GetChildren()) do
         for _, item in pairs(itemFolder:GetChildren()) do
             if item:IsA("MeshPart") or item:IsA("Part") then
                 local itemPos = item.Position
                 local distance = (itemPos - forbiddenZoneCenter).Magnitude
-    
+                
+                -- 检查是否在禁区外
                 if distance > forbiddenRadius then
                     for _, child in pairs(item:GetChildren()) do
-                        if child:IsA("ProximityPrompt") then
-                            for _, targetName in pairs(targetItems) do
-                                if child.ObjectText == targetName then
-                                    foundItem = true
-                                    child.RequiresLineOfSight = false
-                                    child.HoldDuration = 0
-                                    humanoid:Move(Vector3.new(1, 0, 0))
-                                    HumanoidRootPart.CFrame = item.CFrame * CFrame.new(0, 2, 0)
-                                    fireproximityprompt(child)
-                                    
-                                    local startTime = tick()
-                                    local timeout = 5
-                                    local connection
-                                    connection = game:GetService("RunService").Heartbeat:Connect(function()
-                                        if not item or not item.Parent then
-                                            connection:Disconnect()
-                                            return
-                                        end
-                                        
-                                        if tick() - startTime >= timeout then
-                                            item:Destroy()
-                                            connection:Disconnect()
-                                        end
-                                    end)
-                                end
-                            end
+                        if child:IsA("ProximityPrompt") and child.ObjectText == "Money Printer" then
+                            table.insert(moneyPrinters, {
+                                item = item,
+                                prompt = child
+                            })
                         end
                     end
                 end
             end
         end
     end
+    
+    return moneyPrinters
+end
 
-    return not foundItem -- 返回是否应该执行银行抢劫
+local function AutoPickMoneyPrinter()
+    ShowNotification("优先寻找物品...")
+    
+    -- 查找所有印钞机
+    local printers = FindMoneyPrinters()
+    
+    if #printers > 0 then
+        -- 选择最近的印钞机
+        local closestPrinter = nil
+        local minDistance = math.huge
+        
+        for _, printerData in ipairs(printers) do
+            local distance = (printerData.item.Position - HumanoidRootPart.Position).Magnitude
+            if distance < minDistance then
+                minDistance = distance
+                closestPrinter = printerData
+            end
+        end
+        
+        -- 捡起印钞机
+        if closestPrinter then
+            ShowNotification("发现物品，正在捡取...")
+            closestPrinter.prompt.RequiresLineOfSight = false
+            closestPrinter.prompt.HoldDuration = 0
+            HumanoidRootPart.CFrame = closestPrinter.item.CFrame * CFrame.new(0, 2, 0)
+            fireproximityprompt(closestPrinter.prompt)
+            
+            -- 等待捡取完成或超时
+            local startTime = tick()
+            local timeout = 5
+            local connection
+            connection = game:GetService("RunService").Heartbeat:Connect(function()
+                if not closestPrinter.item or not closestPrinter.item.Parent then
+                    connection:Disconnect()
+                    return true -- 捡取成功
+                end
+                
+                if tick() - startTime >= timeout then
+                    closestPrinter.item:Destroy()
+                    connection:Disconnect()
+                    return false -- 捡取失败
+                end
+            end)
+            
+            return true -- 已找到并尝试捡取印钞机
+        end
+    end
+    
+    return false -- 没有找到印钞机
 end
 
 local function AutoFarmBank()
@@ -305,9 +336,11 @@ while true do
     humanoid = character:WaitForChild("Humanoid")
     scriptStartTime = os.time()
     
-    local shouldRobBank = AutoPickItem()
+    -- 优先寻找印钞机
+    local foundPrinter = AutoPickMoneyPrinter()
     
-    if shouldRobBank then
+    -- 如果没有找到印钞机，则执行银行抢劫
+    if not foundPrinter then
         AutoFarmBank()
     end
     
